@@ -1,0 +1,33 @@
+{
+  "training_params": {
+    "batch_size": 8,
+    "tdqm_disable": false
+  },
+  "dataset": {"return_data": {"video": false, "spectrogram": false, "audio":true}},
+  "model": {
+    "model_class": "CycleGan",
+    "args": {
+      "d_model": 512,
+      "num_classes": 28,
+      "fc_inner": 64,"dropout": 0.1,
+      "bias_infusion": {
+        "method": false
+      },
+      "multi_loss": {
+        "multi_supervised_w": {
+             "combined": 1
+          }
+      }
+    },
+    "load_ongoing": false,
+    "save_dir": "unimodal_audio_VAVL_{}.pth.tar"
+  },
+    "path_biopsies" : "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
+  "tile_path" : "/esat/biomeddata/kkontras/r0786880/biopsy_data",
+  "variables": {
+    "size_image" : [600,600],
+    "batch_size" : 32,
+    "lr": 0.001,
+    "epochs": 100
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "exp_name": "Biopsies Experiment",
+  "agent": "Agent",
+  "training_params": {
+    "cuda": true,
+    "gpu_device": [
+      0
+    ],
+    "seed": 109,
+    "batch_size": 32,
+    "test_batch_size": 32,
+    "data_loader_workers": 8,
+    "pin_memory": true,
+    "async_loading": true,
+    "validation": true,
+    "rec_test": false,
+    "test_on_bottoms": false,
+    "use_test_set": true,
+    "verbose": true,
+    "adversarial_training": {
+      "use": false,
+      "adv_epsilon": 0.01
+    },
+    "tdqm_disable": false,
+    "wandb_disable": false,
+    "res": true
+  },
+  "scheduler": {
+    "type": "cosanneal",
+    "max_lr": 0.001,
+    "warm_up_steps": 1500
+  },
+  "optimizer": {
+    "type": "Adam",
+    "learning_rate": 0.00005,
+    "momentum": 0.9,
+    "weight_decay": 5e-6,
+    "beta1": 0.9,
+    "beta2": 0.999
+  },
+  "early_stopping": {
+    "max_epoch": 1500,
+    "end_of_epoch_check": true,
+    "log_interval": 10,
+    "save_every": 1,
+    "save_every_valstep": 1,
+    "validate_every": 102,
+    "validate_after": 0,
+    "n_steps_stop": 300,
+    "n_steps_stop_after": 0,
+    "validate_with": "accuracy"
+  },
+  "dataset": {
+    "data_split": {},
+    "dataloader_class": "Biopsy_Dataloader",
+    "dataset_class": "Biopsy_Dataset",
+    "data_roots": "/esat/biomeddata/kkontras/r0786880/biopsy_data",
+    "fps": 1,
+    "num_frame": 4
+  },
+  "model": {
+    "pretrained_model": {
+      "use": true,
+      "dir": "models/cyclegan_he2mt.pth"
+    },
+    "save_base_dir": "/esat/biomeddata/kkontras/r0786880/biopsy_models",
+    "load_ongoing": false,
+    "args": {
+      "num_classes": 2
+    }
+  },
+  "path_biopsies": "/esat/smcdata/tempusers/r0786880/no_backup/Biopsies",
+  "tile_path": "/esat/biomeddata/kkontras/r0786880/biopsy_data",
+  "variables": {
+    "size_image": [
+      600,
+      600
+    ],
+    "batch_size": 32,
+    "lr": 0.001,
+    "epochs": 100
+  },
+  "models": {
+    "names": [
+      "CycleGan"
+    ],
+    "weights": [
+      "models/cyclegan_he2mt.pth"
+    ]
+  },
+  "data_path": "data/he/",
+  "a2b": true,
+  "batch_size": 32,
+  "results_path": "results/masson_fake/",
+  "add_suffix": false,
+  "device": 0,
+  "num_workers": 4,
+  "center_crop": false,
+  "weights": "models/cyclegan_he2mt.pth"
+}

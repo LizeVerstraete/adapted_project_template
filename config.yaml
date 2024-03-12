@@ -14,7 +14,7 @@ generate:
   #--> provided, then default weights will be used.
   ##############################################################################
 
-  data_path: data/processed/HE/
+  data_path: data/processed/he/
   ##############################################################################
   #--> Input source images path.
   ##############################################################################
@@ -27,10 +27,10 @@ generate:
   #--> Needed for Drit, DritAverageTensor, Unit, Munit and MunitAverageTensor.
   #--> For other models if weights is not provided, a2b will be used to load
   #--> default weights.
-  #--> For trained and provided models, domain A is HE and domain B is MT, so
-  #--> a2b set to true implies translation from HE to MT, and so <data_path>
-  #--> contains domain HE images while a2b set to false implies translation from
-  #--> MT to HE, and so <data_path> contains domain MT images.
+  #--> For trained and provided models, domain A is he and domain B is MT, so
+  #--> a2b set to true implies translation from he to MT, and so <data_path>
+  #--> contains domain he images while a2b set to false implies translation from
+  #--> MT to he, and so <data_path> contains domain MT images.
   ##############################################################################
 
   batch_size: 32
@@ -112,7 +112,7 @@ metrics:
   #--> ssim metric to be computed
   ##############################################################################
 
-  source: data/processed/HE/
+  source: data/processed/he/
   ##############################################################################
   #--> Input source images path.
   ##############################################################################

@@ -91,7 +91,12 @@ class Agent():
 
             self.accelerate_components()
 
+            self.accelerator.wait_for_everyone()
+            if self.accelerator.is_main_process:
+                self.validator_tester.validate(test_set=False)
+
             self.trainer.train_steps()
+
 
         except KeyboardInterrupt:
             print("You have entered CTRL+C.. Wait to finalize")

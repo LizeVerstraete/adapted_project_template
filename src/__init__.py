@@ -7,7 +7,7 @@ from src.modelling import MODELS, MODEL_INS, MODEL_WEIGHTS, MODEL_DIR, L_MODELS,
 
 __version__ = "0.0.1"
 
-TISSUES = ["HE", "Masson"]
+TISSUES = ["he", "Masson"]
 ASSETS_DIR = Path(__file__).absolute().parents[0] / 'data_processing' / 'assets'
 FID_ACT_DIR = RESULTS_DIR / 'fid_activations'
 STATS_DIR = RESULTS_DIR / 'statistics'

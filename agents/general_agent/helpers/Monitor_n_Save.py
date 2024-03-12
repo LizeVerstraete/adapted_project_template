@@ -106,7 +106,6 @@ class Monitor_n_Save():
             self._early_stop_check_n_save(not_saved)
 
 
-
     def _find_learning_rate(self):
         for param_group in self.agent.optimizer.param_groups:
             self.lr = param_group['lr']

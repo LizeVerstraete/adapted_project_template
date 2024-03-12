@@ -41,7 +41,7 @@ class Models:
 
 @dataclass
 class ModelConf:
-    data_path: Path = DATA_DIR / 'processed' / 'HE'
+    data_path: Path = DATA_DIR / 'processed' / 'he'
     results_path: Path = RESULTS_DIR
     batch_size: int = 1
     device: int = -1
@@ -87,7 +87,7 @@ class GenerateConf(ModelConf):
 @dataclass
 class MetricsConf:
     classic_metrics: Sequence[str] = ('ssim',)
-    source: Path = DATA_DIR / 'processed' / 'HE'  # source images path
+    source: Path = DATA_DIR / 'processed' / 'he'  # source images path
     fake: Path = RESULTS_DIR / 'images' / 'fakes'  # fake images path
     results_path: Path = RESULTS_DIR  # results path
     center_crop: Optional[int] = None  # size of center crop transformation

@@ -25,7 +25,7 @@ class Biopsy_Dataset(Dataset):
         self.image_files_HE = sorted([file for directory in self.image_folders_HE for file in directory.glob('*')])
         self.image_files_MUC = sorted([file for directory in self.image_folders_MUC for file in directory.glob('*')])
         #not needed for cyclegan
-        #assert len(self.image_files_HE) == len(self.image_files_MUC), "You need equally much HE and MUC images"
+        #assert len(self.image_files_HE) == len(self.image_files_MUC), "You need equally much he and MUC images"
 
     def __getitem__(self, idx):
         image_path_HE = self.image_files_HE[idx]
@@ -100,7 +100,7 @@ class Biopsy_Dataloader:
     def get_test_loader(self):
         return self.test_loader
 
-#Give an example plot of what a set of HE - MUC image looks like
+#Give an example plot of what a set of he - MUC image looks like
 if __name__ == "__main__":
     config_filename = r"/esat/biomeddata/kkontras/r0786880/models/remote/configuration.json"
     with open(config_filename, 'r') as config_json:

@@ -61,32 +61,13 @@ class General_Evaluator:
         self.lab_wds = []
         self.fid_scores = []
         self.preds = {pred_key.lower(): [] for pred_key in self.config.model.args.multi_loss.multi_supervised_w if self.config.model.args.multi_loss.multi_supervised_w[pred_key] != 0.0}
-        self.labels = []
+        self.outputs = []
         self.processed_instances = 0
 
     def process(self,all_outputs):
         self.processed_instances += len(all_outputs["loss"]["SSIMs"])
         self.losses.append(all_outputs["loss"]["SSIMs"])
-
-
-
-    # def process(self, all_output: dict):
-    #
-    #     logits = {pred: all_output["pred"][pred].cpu() for pred in all_output["pred"]}
-    #     label = all_output["label"].cpu()
-    #     loss = {l_i: all_output["loss"][l_i].detach().cpu() for l_i in all_output["loss"]}
-    #     num_instances = label.shape[0]
-    #
-    #     for pred_key in logits:
-    #         if pred_key not in self.preds:
-    #             continue
-    #         assert (len(logits[pred_key].shape) == 2), "The shape of logits must be in format [bs, num_test_clips * num_test_crops, total_classes]"
-    #         self.preds[pred_key].append(logits[pred_key])
-    #
-    #     self.labels.append(label)
-    #
-    #     self.processed_instances += num_instances
-    #     self.losses.append(loss)
+        self.outputs.append(all_outputs["pred"])
 
     def mean_batch_loss(self):
         if len(self.losses)==0:
@@ -124,31 +105,6 @@ class General_Evaluator:
 
         return metrics
 
-    # def evaluate(self):
-    #     targets_tens = torch.concatenate(self.labels).cpu().flatten()
-    #     mean_batch_loss, _ = self.mean_batch_loss()
-    #     total_preds, metrics  = {}, defaultdict(dict)
-    #     if mean_batch_loss is not None:
-    #         metrics["loss"] = mean_batch_loss
-    #
-    #     ece = torchmetrics.CalibrationError(num_classes=self.config.model.args.num_classes, task="multiclass")
-    #     for pred_key in self.preds:
-    #         if len(self.preds[pred_key]) == 0:
-    #             continue
-    #         total_preds = torch.concatenate(self.preds[pred_key]).cpu()#[:self.processed_instances]
-    #         metrics["acc"][pred_key] = Accuracy(task="multiclass", num_classes=self.num_classes)(total_preds,targets_tens).item()
-    #         if self.num_classes > 5:
-    #             metrics["top5_acc"][pred_key] = Accuracy(task="multiclass", num_classes=self.num_classes, top_k=5)(total_preds,
-    #                                                                                                  targets_tens).item()
-    #         metrics["f1"][pred_key] = F1Score( task="multiclass", num_classes=self.num_classes, average='macro')(total_preds, targets_tens).item()
-    #         metrics["f1_mi"][pred_key] = F1Score( task="multiclass", num_classes=self.num_classes, average='micro')(total_preds, targets_tens).item()
-    #         metrics["k"][pred_key] = CohenKappa(task="multiclass", num_classes=self.num_classes)(total_preds, targets_tens).item()
-    #         metrics["f1_perclass"][pred_key] = F1Score(task="multiclass", num_classes=self.num_classes, average=None)(total_preds, targets_tens)
-    #         metrics["ece"][pred_key] = ece(total_preds, targets_tens).item()
-    #
-    #     metrics = dict(metrics) #Avoid passing empty dicts to logs, better return an error!
-    #
-    #     return metrics
 
     def is_best(self, metrics = None, best_logs=None):
         if metrics is None:

@@ -128,47 +128,29 @@ class Monitor_n_Save():
 
         self.print_valid_results(val_metrics, current_step)
 
-    def print_valid_results(self, val_metrics, current_step=None, test=False):
-
+    def print_valid_results(self,val_metrics,current_step = None, test = False):
         if self.agent.config.training_params.verbose:
+                if not self.agent.config.training_params.tdqm_disable and not self.agent.trainer.end_of_epoch_check: print()
+                if test:
+                    message = Fore.WHITE + "Test"
+                else:
+                    message = Fore.WHITE + "Val"
 
-            if not self.agent.config.training_params.tdqm_disable and not self.agent.trainer.end_of_epoch_check: print()
+                if current_step is not None:
+                    step = int(current_step / self.agent.config.early_stopping.validate_every)
+                    message += "Epoch {0:d} step {1:d} with ".format(self.agent.logs["current_epoch"], step)
+                else:
+                    message += "Epoch {0:d} with ".format(self.agent.logs["current_epoch"])
 
-            if test:
-                message = Fore.WHITE + "Test "
-            else:
-                message = Fore.WHITE + "Val "
+                for metric_name, metric_value in val_metrics.items():
+                    if isinstance(metric_value, dict):
+                        for sub_metric_name, sub_metric_value in metric_value.items():
+                            message += f"{Fore.RED if metric_name == 'loss' else Fore.LIGHTBLUE_EX}{sub_metric_name}: {sub_metric_value:.6f} "
+                    else:
+                        message += f"{Fore.RED if metric_name == 'loss' else Fore.LIGHTBLUE_EX}{metric_name}: {metric_value:.6f} "
 
-            if current_step is not None:
-                step = int(current_step / self.agent.config.early_stopping.validate_every)
-                message += "Epoch {0:d} step {1:d} with ".format(self.agent.logs["current_epoch"], step)
-            else:
-                message += "Epoch {0:d} with ".format(self.agent.logs["current_epoch"])
-
-            if "loss" in val_metrics:
-                for i, v in val_metrics["loss"].items(): message += Fore.RED + "{} : {:.6f} ".format(i,v)
-            if "acc" in val_metrics:
-                for i, v in val_metrics["acc"].items(): message += Fore.LIGHTBLUE_EX + "Acc_{}: {:.2f} ".format(i,v*100)
-            if "top5_acc" in val_metrics:
-                for i, v in val_metrics["top5_acc"].items(): message += Fore.LIGHTBLUE_EX + "Top5_Acc_{}: {:.2f} ".format(i, v * 100)
-            if "acc_exzero" in val_metrics:
-                for i, v in val_metrics["acc_exzero"].items(): message += Fore.LIGHTBLUE_EX + "Acc_ExZ_{}: {:.2f} ".format(i, v * 100)
-            if "f1" in val_metrics:
-                for i, v in val_metrics["f1"].items(): message += Fore.LIGHTGREEN_EX + "F1_{}: {:.2f} ".format(i,v*100)
-            if "k" in val_metrics:
-                for i, v in val_metrics["k"].items(): message += Fore.LIGHTGREEN_EX + "K_{}: {:.4f} ".format(i,v)
-            if "acc_7" in val_metrics:
-                for i, v in val_metrics["acc_7"].items(): message += Fore.MAGENTA + "Acc7_{}: {:.4f} ".format(i,v*100)
-            if "acc_5" in val_metrics:
-                for i, v in val_metrics["acc_5"].items(): message += Fore.LIGHTMAGENTA_EX + "Acc5_{}: {:.4f} ".format(i,v*100)
-            if "mae" in val_metrics:
-                for i, v in val_metrics["mae"].items(): message += Fore.LIGHTBLUE_EX + "MAE_{}: {:.4f} ".format(i,v)
-            if "corr" in val_metrics:
-                for i, v in val_metrics["corr"].items(): message += Fore.LIGHTWHITE_EX + "Corr_{}: {:.4f} ".format(i,v)
-
-            if self.agent.accelerator.is_main_process:
-                self.agent.logger.info(message)
-
+                if self.agent.accelerator.is_main_process:
+                    self.agent.logger.info(message)
 
     def _print_epoch_metrics(self):
         if self.agent.config.training_params.verbose:

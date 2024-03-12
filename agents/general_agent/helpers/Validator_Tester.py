@@ -30,11 +30,24 @@ class Validator_Tester():
         model.image_outs.mkdir(parents=True, exist_ok=True)
         model.eval()
         total_output_list = []
+        this_dataloader = self.agent.data_loader.test_loader if test_set else self.agent.data_loader.valid_loader
+        loss = 0
         with torch.no_grad():
-            for imgs, imgs_path in tqdm(model.dataloader):
-                output = model.post_transform(model.forward(imgs))
-                total_output_list.append(output)
-                model.save_outputs(output, imgs_path)
+            pbar = tqdm(enumerate(this_dataloader),
+                        total=len(this_dataloader),
+                        desc="Validation",
+                        leave=False,
+                        disable=True,
+                        position=1)
+            for batch_idx, served_dict in pbar:
+            #for imgs, imgs_path in tqdm(model.dataloader):
+                #model.save_outputs(output, imgs_path)
+                data = {view: served_dict["data"][view].cuda() for view in
+                        served_dict["data"] if type(served_dict["data"][view]) is torch.Tensor}
+                label = served_dict["label"].type(torch.LongTensor).cuda()
+                predictions = self.agent.model.forward(data)
+                self.this_evaluator.process(predictions,label,loss)
+
             total_output = np.concatenate(total_output_list, axis=0)
             output_losses = {}
             fakes = sorted(Path('results/masson_fake/').glob('*'))

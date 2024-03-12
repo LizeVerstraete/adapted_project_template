@@ -39,9 +39,13 @@ class CycleGan(BaseModel):
         return [transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 
-    def forward(self, t: torch.Tensor):
+    # def forward(self, t: torch.Tensor):
+    #     """ Run forward pass."""
+    #     return self.net(t.to(self.conf.device))
+    #
+    def forward(self, t: dict):
         """ Run forward pass."""
-        return self.net(t.to(self.conf.device))
+        return self.net(t[0].to(self.conf.device))
 
     def post_transform(self, t: torch.Tensor):
         """ Post-process transformations to be applied to network outputs."""

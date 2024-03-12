@@ -1,8 +1,12 @@
+import pickle
+
+import numpy as np
+import torch
 from PIL import Image
 from torchvision import transforms
 from matplotlib import pyplot as plt
 from pathlib import Path
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Subset, Dataset, DataLoader
 import json
 from easydict import EasyDict
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -42,9 +46,12 @@ class Biopsy_Dataset(Dataset):
                 image_HE = image_HE.permute(1, 2, 0)
             if check_permute(image_MUC):
                 image_MUC = image_MUC.permute(1, 2, 0)
+        print(image_HE.shape)
+        print(image_MUC.shape)
 
         #return {'image_HE':image_HE, 'image_MUC' : image_MUC, 'image_path_HE': image_path_HE, 'image_path_MUC': image_path_MUC}
-        return {'image_HE':image_HE, 'image_MUC' : image_MUC}
+        return {"data": {0: image_HE}, "label": image_MUC}
+        #return {'image_HE':image_HE, 'image_MUC' : image_MUC}
 
     def __len__(self):
         return len(self.image_files_MUC)
@@ -70,6 +77,7 @@ class Biopsy_Dataloader:
         self.dataset = dataset
         self.batch_size = batch_size
 
+
         patients = [str(patient_folder.stem) for patient_folder in dataset.image_folders_HE]
 
         train_patients, test_val_patients = train_test_split(patients, test_size=test_size+val_size, random_state=42)
@@ -82,14 +90,23 @@ class Biopsy_Dataloader:
         test_indices = [idx for idx, patient_folder in enumerate(dataset.image_folders_HE) if
                         patient_folder.stem in test_patients]
 
-        # Define samplers and dataloaders
-        self.train_sampler = SubsetRandomSampler(train_indices)
-        self.val_sampler = SubsetRandomSampler(val_indices)
-        self.test_sampler = SubsetRandomSampler(test_indices)
+        # # Define samplers and dataloaders
+        # self.train_sampler = SubsetRandomSampler(train_indices)
+        # self.val_sampler = SubsetRandomSampler(val_indices)
+        # self.test_sampler = SubsetRandomSampler(test_indices)
+        #
+        # self.train_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.train_sampler)
+        # self.valid_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.val_sampler)
+        # self.test_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.test_sampler)
+        # Define train, validation, and test datasets
+        train_dataset = Subset(dataset, train_indices).dataset
+        val_dataset = Subset(dataset, val_indices).dataset
+        test_dataset = Subset(dataset, test_indices).dataset
 
-        self.train_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.train_sampler)
-        self.val_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.val_sampler)
-        self.test_loader = DataLoader(dataset, batch_size=batch_size, sampler=self.test_sampler)
+        # Define DataLoader for train, validation, and test datasets
+        self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=6,pin_memory=True,worker_init_fn=lambda worker_id: np.random.seed(15+worker_id))
+        self.valid_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+        self.test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     def get_train_loader(self):
         return self.train_loader

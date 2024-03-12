@@ -12,7 +12,7 @@ from agents.general_agent.helpers.Monitor_n_Save import Monitor_n_Save
 from agents.general_agent.helpers.Validator_Tester import Validator_Tester
 from agents.general_agent.helpers.Evaluator import All_Evaluator
 from utils.misc import print_cuda_statistics
-from configs.Biopsies.MyBiopsies_Dataset import *
+from datasets.MyBiopsies_Dataset import *
 
 os.environ['WANDB_SILENT'] = 'true'
 

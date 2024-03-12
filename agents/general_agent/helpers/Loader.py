@@ -35,17 +35,9 @@ class Loader():
 
     def load_models_n_optimizer(self):
 
-        enc = self.sleep_load_encoder(enc_args=self.agent.config.model.get("encoders", []))
         model_class = globals()[self.agent.config.model.model_class]
-        # self.agent.model = model_class(enc, args = self.agent.config.model.args)
-        # self.agent.model = nn.DataParallel(model_class(encs = enc, args = self.agent.config.model.args), device_ids=[torch.device(i) for i in self.agent.config.training_params.gpu_device])
-
-        if "save_base_dir" in self.agent.config.model and "swin_backbone" in self.agent.config.model.args:
-            self.agent.config.model.args.swin_backbone = os.path.join(self.agent.config.model.save_base_dir, self.agent.config.model.args.swin_backbone)
-
         if "save_base_dir" in self.agent.config.model and "pretraining_paths" in self.agent.config.model.args:
             self.agent.config.model.args.pretraining_paths = {i: os.path.join(self.agent.config.model.save_base_dir, self.agent.config.model.args.pretraining_paths[i]) for i in self.agent.config.model.args.pretraining_paths}
-
 
         #self.agent.model = model_class(encs = enc, args = self.agent.config.model.args)
         self.agent.model = model_class(self.agent.config)

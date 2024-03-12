@@ -100,9 +100,7 @@ class General_Evaluator:
             self.SSIMs.append(ssim_score)
             self.lab_wds.append(lab_wd)
             self.fid_scores.append(fid_score)
-
         metrics = dict(metrics)
-
         return metrics
 
 
@@ -110,7 +108,7 @@ class General_Evaluator:
         if metrics is None:
             metrics = self.evaluate()
 
-        # Flag if its saved dont save it again on $save_every
+        # Flag if its saved don't save it again on $save_every
         not_saved = True
         validate_with = self.config.early_stopping.get("validate_with", "loss")
         if validate_with == "loss":

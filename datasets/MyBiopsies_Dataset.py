@@ -46,8 +46,6 @@ class Biopsy_Dataset(Dataset):
                 image_HE = image_HE.permute(1, 2, 0)
             if check_permute(image_MUC):
                 image_MUC = image_MUC.permute(1, 2, 0)
-        print(image_HE.shape)
-        print(image_MUC.shape)
 
         #return {'image_HE':image_HE, 'image_MUC' : image_MUC, 'image_path_HE': image_path_HE, 'image_path_MUC': image_path_MUC}
         return {"data": {0: image_HE}, "label": image_MUC}
@@ -72,7 +70,7 @@ transform = transforms.Compose([
 class Biopsy_Dataloader:
     #def __init__(self,dataset,batch_size = 32,test_size = 0.1, val_size = 0.1):
         #self.dataset = dataset
-    def __init__(self,config,dataset,batch_size = 32,test_size = 0.1, val_size = 0.1):
+    def __init__(self,config,dataset,batch_size = 32,test_size = 0.1, val_size = 0.1): #Don't forget to set this back to a bigger value
         self.config = config
         self.dataset = dataset
         self.batch_size = batch_size
@@ -102,12 +100,28 @@ class Biopsy_Dataloader:
         train_dataset = Subset(dataset, train_indices).dataset
         val_dataset = Subset(dataset, val_indices).dataset
         test_dataset = Subset(dataset, test_indices).dataset
-
+        g = torch.Generator()
+        g.manual_seed(self.config.training_params.seed)
         # Define DataLoader for train, validation, and test datasets
-        self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=6,pin_memory=True,worker_init_fn=lambda worker_id: np.random.seed(15+worker_id))
-        self.valid_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-        self.test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
+        self.train_loader = DataLoader(train_dataset,
+                                       batch_size=self.config.training_params.batch_size,
+                                       shuffle=True,
+                                       num_workers=self.config.training_params.data_loader_workers,
+                                       pin_memory=self.config.training_params.pin_memory,
+                                       worker_init_fn=lambda worker_id: np.random.seed(15 + worker_id),
+                                       generator=g)
+        self.valid_loader = DataLoader(val_dataset, batch_size=self.config.training_params.batch_size,
+                                       shuffle=True,
+                                       num_workers=self.config.training_params.data_loader_workers,
+                                       pin_memory=self.config.training_params.pin_memory,
+                                       worker_init_fn=lambda worker_id: np.random.seed(15 + worker_id),
+                                       generator=g)
+        self.test_loader = DataLoader(test_dataset, batch_size=self.config.training_params.batch_size,
+                                      shuffle=True,
+                                      num_workers=self.config.training_params.data_loader_workers,
+                                      pin_memory=self.config.training_params.pin_memory,
+                                      worker_init_fn=lambda worker_id: np.random.seed(15 + worker_id),
+                                      generator=g)
     def get_train_loader(self):
         return self.train_loader
 

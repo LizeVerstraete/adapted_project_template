@@ -40,13 +40,13 @@ class Validator_Tester():
                         disable=True,
                         position=1)
             for batch_idx, served_dict in pbar:
-            #for imgs, imgs_path in tqdm(model.dataloader):
-                #model.save_outputs(output, imgs_path)
-                data = {view: served_dict["data"][view].cuda() for view in
-                        served_dict["data"] if type(served_dict["data"][view]) is torch.Tensor}
-                label = served_dict["label"].type(torch.LongTensor).cuda()
-                predictions = self.agent.model.forward(data)
-                self.this_evaluator.process(predictions,label,loss)
+                data = served_dict["data"][0].cuda()
+                label = served_dict["label"].cuda()
+                predictions = self.agent.model.forward(data.permute(0,3,1,2))
+                this_evaluator.process(predictions,label,loss)
+                if batch_idx == 2:
+                    break
+            this_evaluator.evaluate()
 
             total_output = np.concatenate(total_output_list, axis=0)
             output_losses = {}

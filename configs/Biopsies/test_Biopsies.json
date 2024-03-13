@@ -1,6 +1,6 @@
 {
   "training_params": {
-    "batch_size": 8,
+    "batch_size": 32,
     "tdqm_disable": false
   },
   "dataset": {"return_data": {"video": false, "spectrogram": false, "audio":true}},

@@ -1,15 +1,20 @@
 from pathlib import Path
 
+import cv2
 import torch
 import logging
+from skimage.metrics import structural_similarity as ssim
+
+from cleanfid.fid import get_batch_features
 from torchmetrics import F1Score, CohenKappa, Accuracy
 from collections import defaultdict
 import torchmetrics
 import numpy as np
 
 from metric_calculation import update_df
-from src.data_processing.config import MetricsConf
+from src.data_processing.config import MetricsConf, GenerateConf
 from src.data_processing.metrics import generate_classic_metrics, calculate_fid, unpaired_lab_WD
+from src.utils.utils import get_config
 
 
 # def multiclass_acc(preds, truths):
@@ -61,13 +66,15 @@ class General_Evaluator:
         self.lab_wds = []
         self.fid_scores = []
         self.preds = {pred_key.lower(): [] for pred_key in self.config.model.args.multi_loss.multi_supervised_w if self.config.model.args.multi_loss.multi_supervised_w[pred_key] != 0.0}
-        self.outputs = []
+        self.labels = torch.empty(0,256,256,3).cuda()
         self.processed_instances = 0
+        self.predictions = torch.empty(0, 3, 256, 256).cuda()
 
-    def process(self,all_outputs):
-        self.processed_instances += len(all_outputs["loss"]["SSIMs"])
-        self.losses.append(all_outputs["loss"]["SSIMs"])
-        self.outputs.append(all_outputs["pred"])
+    def process(self,predictions,label,loss):
+        self.processed_instances += len(predictions)
+        self.losses.append(loss)
+        self.labels = torch.cat((self.labels,label),dim=0)
+        self.predictions = torch.cat((self.predictions,predictions),dim=0)
 
     def mean_batch_loss(self):
         if len(self.losses)==0:
@@ -82,26 +89,46 @@ class General_Evaluator:
         return dict(mean_batch_loss), message
 
     def evaluate(self):
-        total_preds, metrics = {}, defaultdict(dict)
-        fakes = sorted(Path('results/masson_fake/').glob('*'))
-        fakes = [f for f in fakes if f.is_dir()]
-        for fake in fakes:
-            m = MetricsConf(classic_metrics=['ssim'], center_crop=None,
-                            source='data/he/', fake=fake)
-            results = generate_classic_metrics(metrics_conf=m)
-            ssim_score = results.mean().values[0]
-            metrics["SSIM"] = ssim_score
-            #ssim_std = results.std().values[0]
-            lab_wd = unpaired_lab_WD('data/he/', str(fake))
-            metrics["WD"] = lab_wd
-            fid_score = calculate_fid(['data/masson/', str(fake)], device=0,
-                                      batch_size=32)
-            metrics["FID"] = fid_score
-            self.SSIMs.append(ssim_score)
-            self.lab_wds.append(lab_wd)
-            self.fid_scores.append(fid_score)
-        metrics = dict(metrics)
+        metrics = defaultdict(dict)
+        index=-1
+        sum_ssims = 0
+        for prediction in self.predictions:
+            index += 1
+            label = self.labels[index]
+            sum_ssims += ssim(cv2.cvtColor(label.cpu().numpy(),cv2.COLOR_BGR2GRAY),cv2.cvtColor(prediction.permute(1,2,0).cpu().numpy(),cv2.COLOR_BGR2GRAY), multichannel=False)
+        avg_ssim = sum_ssims/(index+1)
+        metrics["SSIM"] = avg_ssim
         return metrics
+
+    # def evaluate(self):
+    #     total_preds, metrics = {}, defaultdict(dict)
+    #
+    #     conf = get_config('config_example_he2mt.yaml')
+    #     generate_conf = GenerateConf(**conf['generate'])
+    #     model = generate_conf.models.models[0]
+    #     generate_conf.weights = generate_conf.models.weights[0]
+    #     model = model(generate_conf)
+    #     #features_predictions = get_batch_features(self.predictions,model=None,device=0)
+    #
+    #     fakes = sorted(Path('results/masson_fake/').glob('*'))
+    #     fakes = [f for f in fakes if f.is_dir()]
+    #     for fake in fakes:
+    #         m = MetricsConf(classic_metrics=['ssim'], center_crop=None,
+    #                         source='data/he/', fake=fake)
+    #         results = generate_classic_metrics(metrics_conf=m)
+    #         ssim_score = results.mean().values[0]
+    #         metrics["SSIM"] = ssim_score
+    #         #ssim_std = results.std().values[0]
+    #         lab_wd = unpaired_lab_WD('data/he/', str(fake))
+    #         metrics["WD"] = lab_wd
+    #         fid_score = calculate_fid(['data/masson/', str(fake)], device=0,
+    #                                   batch_size=32)
+    #         metrics["FID"] = fid_score
+    #         self.SSIMs.append(ssim_score)
+    #         self.lab_wds.append(lab_wd)
+    #         self.fid_scores.append(fid_score)
+    #     metrics = dict(metrics)
+    #     return metrics
 
 
     def is_best(self, metrics = None, best_logs=None):

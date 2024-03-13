@@ -42,7 +42,7 @@ class Validator_Tester():
             for batch_idx, served_dict in pbar:
                 data = served_dict["data"][0].cuda()
                 label = served_dict["label"].cuda()
-                predictions = self.agent.model.forward(data.permute(0,3,1,2))
+                predictions = self.agent.model.forward(data.permute(0,3,1,2)).permute(0,2,3,1)
                 this_evaluator.process(predictions,label,loss)
                 if batch_idx == 2:
                     break

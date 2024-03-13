@@ -4,6 +4,7 @@ import cv2
 import torch
 import logging
 from skimage.metrics import structural_similarity as ssim
+from scipy.stats import wasserstein_distance
 
 from cleanfid.fid import get_batch_features
 from torchmetrics import F1Score, CohenKappa, Accuracy
@@ -12,8 +13,10 @@ import torchmetrics
 import numpy as np
 
 from metric_calculation import update_df
+from src.data_processing.adapted_metrics import unpaired_lab_WB
 from src.data_processing.config import MetricsConf, GenerateConf
-from src.data_processing.metrics import generate_classic_metrics, calculate_fid, unpaired_lab_WD
+from src.data_processing.fid import calculate_fid
+from src.data_processing.metrics import SSIM
 from src.utils.utils import get_config
 
 
@@ -26,6 +29,10 @@ from src.utils.utils import get_config
 #     :return: Classification accuracy
 #     """
 #     return np.sum(np.round(preds) == np.round(truths)) / float(len(truths))
+def av_wasserstein(hist1: np.ndarray, hist2: np.ndarray) -> np.float64:
+    return np.mean([wasserstein_distance(hist1[i], hist2[i]) for i in range(3)])
+
+
 class All_Evaluator:
     def __init__(self, config, dataloaders: dict):
         evaluator_class = globals()["General_Evaluator"]
@@ -68,7 +75,7 @@ class General_Evaluator:
         self.preds = {pred_key.lower(): [] for pred_key in self.config.model.args.multi_loss.multi_supervised_w if self.config.model.args.multi_loss.multi_supervised_w[pred_key] != 0.0}
         self.labels = torch.empty(0,256,256,3).cuda()
         self.processed_instances = 0
-        self.predictions = torch.empty(0, 3, 256, 256).cuda()
+        self.predictions = torch.empty(0,256,256,3).cuda()
 
     def process(self,predictions,label,loss):
         self.processed_instances += len(predictions)
@@ -90,14 +97,27 @@ class General_Evaluator:
 
     def evaluate(self):
         metrics = defaultdict(dict)
+        #CALCULATE WB
+        metrics["WB"] = unpaired_lab_WB(self.labels,self.predictions)
+
+        #CALCULATE SSIM
         index=-1
         sum_ssims = 0
-        for prediction in self.predictions:
+        avg_hists = []
+        hist_labels = np.zeros((3,256))
+        hist_predictions = np.zeros((3,256))
+
+        for label in self.labels:
             index += 1
-            label = self.labels[index]
-            sum_ssims += ssim(cv2.cvtColor(label.cpu().numpy(),cv2.COLOR_BGR2GRAY),cv2.cvtColor(prediction.permute(1,2,0).cpu().numpy(),cv2.COLOR_BGR2GRAY), multichannel=False)
+            label = label.cpu().numpy()
+            prediction = self.predictions[index].cpu().numpy()
+            sum_ssims += SSIM(label,prediction)
+            #sum_ssims += ssim(cv2.cvtColor(label,cv2.COLOR_BGR2GRAY),cv2.cvtColor(prediction,cv2.COLOR_BGR2GRAY), multichannel=False)
         avg_ssim = sum_ssims/(index+1)
         metrics["SSIM"] = avg_ssim
+
+        #CALCULATE FID -> doesn't work yet
+        metrics["FID"] = calculate_fid(self.predictions, self.labels, 32)
         return metrics
 
     # def evaluate(self):
